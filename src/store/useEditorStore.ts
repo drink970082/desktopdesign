@@ -1,6 +1,13 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { getItem } from '../catalog/catalog'
+import { CATALOG_BY_ID, getItem } from '../catalog/catalog'
+import {
+  loadSavedSetups,
+  persistSavedSetups,
+  type SavedSetupsMap,
+} from '../persistence/savedSetups'
+import type { SetupV1 } from '../persistence/schema'
+import { toSetup } from '../persistence/serialize'
 import type { GizmoAxis, SceneObject, TransformMode, Vec3 } from './types'
 
 function newId(): string {
@@ -36,6 +43,9 @@ interface EditorState {
   gizmoSize: number
   isDragging: boolean
 
+  // persistence
+  savedSetups: SavedSetupsMap
+
   // actions
   add: (catalogId: string, sizeId?: string, colorwayId?: string) => void
   remove: (id: string) => void
@@ -57,6 +67,12 @@ interface EditorState {
 
   reset: () => void
   loadDefaultScene: () => void
+
+  // serialization / persistence
+  exportSetup: () => SetupV1
+  loadSetup: (setup: SetupV1) => void
+  saveNamed: (name: string) => void
+  deleteNamed: (name: string) => void
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -72,6 +88,8 @@ export const useEditorStore = create<EditorState>()(
     gizmoAxis: { x: true, y: false, z: true },
     gizmoSize: 0.8,
     isDragging: false,
+
+    savedSetups: loadSavedSetups(),
 
     add: (catalogId, sizeId, colorwayId) =>
       set((s) => {
@@ -191,6 +209,61 @@ export const useEditorStore = create<EditorState>()(
       set((s) => {
         s.selectedId = null
       })
+    },
+
+    exportSetup: () => {
+      const s = get()
+      return toSetup({
+        deskCatalogId: s.deskCatalogId,
+        deskSizeId: s.deskSizeId,
+        deskColorwayId: s.deskColorwayId,
+        objects: s.objects,
+      })
+    },
+
+    loadSetup: (setup) =>
+      set((s) => {
+        // Defensive: fall back to defaults for unknown desks, skip unknown items.
+        const deskId = CATALOG_BY_ID[setup.desk.c] ? setup.desk.c : DEFAULT_DESK_ID
+        const desk = getItem(deskId)
+        const deskSizeId = desk.sizeOptions.some((o) => o.id === setup.desk.s)
+          ? setup.desk.s
+          : desk.defaultSizeId
+        const surfaceY = deskHeightOf(deskId, deskSizeId)
+
+        s.deskCatalogId = deskId
+        s.deskSizeId = deskSizeId
+        s.deskColorwayId = setup.desk.w ?? desk.defaultColorwayId ?? ''
+        s.deskSurfaceY = surfaceY
+        s.selectedId = null
+        s.objects = setup.objects
+          .filter((o) => CATALOG_BY_ID[o.c])
+          .map((o) => {
+            const item = getItem(o.c)
+            return {
+              id: newId(),
+              catalogId: o.c,
+              sizeId: o.s,
+              colorwayId: o.w,
+              position: [o.p[0], restingY(item.rests, surfaceY), o.p[1]] as Vec3,
+              rotationY: o.r,
+            }
+          })
+      }),
+
+    saveNamed: (name) => {
+      const data = get().exportSetup()
+      set((s) => {
+        s.savedSetups[name] = { updatedAt: Date.now(), data }
+      })
+      persistSavedSetups(get().savedSetups)
+    },
+
+    deleteNamed: (name) => {
+      set((s) => {
+        delete s.savedSetups[name]
+      })
+      persistSavedSetups(get().savedSetups)
     },
   })),
 )

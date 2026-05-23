@@ -4,21 +4,50 @@ import { INITIAL_CAMERA, type EditorControls } from '../editor/cameraConfig'
 import { useKeyboardShortcuts } from '../editor/useKeyboardShortcuts'
 import CatalogPanel from '../ui/CatalogPanel'
 import InspectorPanel from '../ui/InspectorPanel'
+import Toolbar from '../ui/Toolbar'
 import { useEditorStore } from '../store/useEditorStore'
+import { decodeSetup, readShareCode } from '../persistence/shareLink'
+import { loadAutosave, persistAutosave } from '../persistence/savedSetups'
 
 export default function Create() {
   const controlsRef = useRef<EditorControls>(null)
-  const loadDefaultScene = useEditorStore((s) => s.loadDefaultScene)
   const didInit = useRef(false)
 
   useKeyboardShortcuts()
 
+  // Initial scene: share link > autosave > seeded default (once per mount, only if empty).
   useEffect(() => {
-    // Seed a starter scene once on first visit (share-link loading replaces this later).
     if (didInit.current) return
     didInit.current = true
-    if (useEditorStore.getState().objects.length === 0) loadDefaultScene()
-  }, [loadDefaultScene])
+    const store = useEditorStore.getState()
+
+    const code = readShareCode()
+    if (code) {
+      const setup = decodeSetup(code)
+      if (setup) {
+        store.loadSetup(setup)
+        return
+      }
+      console.warn('Ignoring invalid share link')
+    }
+    if (store.objects.length > 0) return // keep in-memory work across navigation
+    const auto = loadAutosave()
+    if (auto) store.loadSetup(auto)
+    else store.loadDefaultScene()
+  }, [])
+
+  // Debounced autosave of the working scene.
+  useEffect(() => {
+    let t: number | undefined
+    const unsub = useEditorStore.subscribe(() => {
+      window.clearTimeout(t)
+      t = window.setTimeout(() => persistAutosave(useEditorStore.getState().exportSetup()), 400)
+    })
+    return () => {
+      window.clearTimeout(t)
+      unsub()
+    }
+  }, [])
 
   function resetCamera() {
     const c = controlsRef.current
@@ -33,14 +62,8 @@ export default function Create() {
       <CatalogPanel />
       <div className="relative min-w-0 flex-1">
         <EditorCanvas controlsRef={controlsRef} />
-        <div className="pointer-events-none absolute inset-0 p-3">
-          <button
-            type="button"
-            onClick={resetCamera}
-            className="pointer-events-auto rounded-md bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-zinc-900"
-          >
-            Reset camera
-          </button>
+        <div className="pointer-events-none absolute inset-x-0 top-0 p-3">
+          <Toolbar onResetCamera={resetCamera} />
         </div>
       </div>
       <InspectorPanel />
