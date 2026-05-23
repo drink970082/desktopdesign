@@ -14,7 +14,7 @@ export default function Floor() {
       }}
     >
       <planeGeometry args={[30, 30]} />
-      <meshStandardMaterial color="#39474f" roughness={1} metalness={0} />
+      <meshStandardMaterial color="#cdd2d8" roughness={1} metalness={0} />
     </mesh>
   )
 }

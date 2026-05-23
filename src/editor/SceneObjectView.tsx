@@ -6,6 +6,7 @@ import { getColorway, getItem, getSize } from '../catalog/catalog'
 import { PROCEDURAL_MODELS } from '../models/registry'
 import { useEditorStore } from '../store/useEditorStore'
 import { registerObject3D, unregisterObject3D } from './objectRegistry'
+import { applySnapAndCollision } from './snap'
 import SelectionBox from './SelectionBox'
 
 /**
@@ -70,11 +71,9 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
             onMouseDown={() => setDragging(true)}
             onMouseUp={() => {
               setDragging(false)
-              updateTransform(
-                obj.id,
-                [node.position.x, node.position.y, node.position.z],
-                node.rotation.y,
-              )
+              // Snap onto the desk and resolve overlaps before persisting.
+              const [x, z] = applySnapAndCollision(obj.id, node)
+              updateTransform(obj.id, [x, node.position.y, z], node.rotation.y)
             }}
           />
         </>

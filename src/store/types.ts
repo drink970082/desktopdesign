@@ -56,6 +56,8 @@ export interface CatalogItem {
   defaultSpawn: [number, number]
   /** Which plane the base rests on. Desk items track the desk surface; chairs etc. the floor. */
   rests: 'desk' | 'floor'
+  /** If true, ignored by collision resolution (e.g. mousepads, which things sit on top of). */
+  noCollide?: boolean
 }
 
 /** A live instance placed in the scene. This is the unit that gets serialized. */

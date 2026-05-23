@@ -20,8 +20,8 @@ export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorC
       // Fires when a click hits no object → deselect.
       onPointerMissed={() => select(null)}
     >
-      <color attach="background" args={['#2a363b']} />
-      <fog attach="fog" args={['#2a363b', 9, 22]} />
+      <color attach="background" args={['#eef1f4']} />
+      <fog attach="fog" args={['#eef1f4', 16, 36]} />
 
       <Lighting />
       <Floor />

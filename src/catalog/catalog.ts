@@ -102,7 +102,7 @@ export const CATALOG: CatalogItem[] = [
     colorways: DEVICE_COLORWAYS,
     defaultColorwayId: 'black',
     defaultYRotation: 0,
-    defaultSpawn: [0.28, 0.12],
+    defaultSpawn: [0.34, 0.12],
     rests: 'desk',
   },
 
@@ -123,8 +123,9 @@ export const CATALOG: CatalogItem[] = [
     ],
     defaultColorwayId: 'black',
     defaultYRotation: 0,
-    defaultSpawn: [0.26, 0.14],
+    defaultSpawn: [0.34, 0.12],
     rests: 'desk',
+    noCollide: true, // a pad — the mouse is meant to sit on top of it
   },
 ]
 
