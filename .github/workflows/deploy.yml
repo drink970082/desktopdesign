@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Run JS actions on Node 24 now (GitHub's Pages actions still ship on the
+# soon-deprecated Node 20; this opts in early and clears the warnings).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Allow the workflow to publish to Pages via OIDC.
 permissions:
   contents: read
