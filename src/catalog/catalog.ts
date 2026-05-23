@@ -3,11 +3,16 @@ import type { CatalogItem, Colorway, SizeOption } from '../store/types'
 const WOOD_COLORWAYS: Colorway[] = [
   { id: 'oak', label: 'Oak', colors: { top: '#c79a6b', frame: '#6f6f73' } },
   { id: 'walnut', label: 'Walnut', colors: { top: '#6b4a32', frame: '#3a3a3a' } },
+  { id: 'maple', label: 'Maple', colors: { top: '#d8b489', frame: '#6f6f73' } },
+  { id: 'cherry', label: 'Cherry', colors: { top: '#8a4b3a', frame: '#3a3a3a' } },
   { id: 'white', label: 'White', colors: { top: '#e8e8ea', frame: '#cfcfd4' } },
+  { id: 'black', label: 'Black', colors: { top: '#2a2a2e', frame: '#1c1c1f' } },
 ]
 
 const DEVICE_COLORWAYS: Colorway[] = [
   { id: 'black', label: 'Black', colors: { body: '#1c1c1f', accent: '#3a3a3f' } },
+  { id: 'gray', label: 'Gray', colors: { body: '#5c5f63', accent: '#3a3a3f' } },
+  { id: 'silver', label: 'Silver', colors: { body: '#b9bdc2', accent: '#8a8d92' } },
   { id: 'white', label: 'White', colors: { body: '#e9e9ec', accent: '#cfcfd4' } },
 ]
 
@@ -34,6 +39,13 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0, 0],
     rests: 'desk',
+    primaryColorRole: 'top',
+    resize: {
+      axes: ['w', 'd', 'h'],
+      min: { w: 0.9, d: 0.5, h: 0.6 },
+      max: { w: 2.0, d: 0.9, h: 1.2 },
+      step: 0.01,
+    },
   },
   {
     id: 'standingDesk',
@@ -50,6 +62,13 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0, 0],
     rests: 'desk',
+    primaryColorRole: 'top',
+    resize: {
+      axes: ['w', 'd', 'h'],
+      min: { w: 0.9, d: 0.5, h: 0.6 },
+      max: { w: 2.0, d: 0.9, h: 1.2 },
+      step: 0.01,
+    },
   },
 
   // ---- Monitors ----
@@ -70,6 +89,15 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0, -0.18],
     rests: 'desk',
+    primaryColorRole: 'body',
+    resize: {
+      axes: ['w', 'h'],
+      min: { w: 0.4, h: 0.24 },
+      max: { w: 1.2, h: 0.6 },
+      step: 0.01,
+    },
+    options: [{ id: 'stand', label: 'Stand', default: true }],
+    elevatable: { min: 0, max: 0.5, step: 0.01 },
   },
 
   // ---- Keyboards ----
@@ -89,6 +117,7 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0, 0.12],
     rests: 'desk',
+    resize: { axes: ['w'], min: { w: 0.28 }, max: { w: 0.46 }, step: 0.005 },
   },
 
   // ---- Mice ----
@@ -126,6 +155,7 @@ export const CATALOG: CatalogItem[] = [
     defaultSpawn: [0.34, 0.12],
     rests: 'desk',
     noCollide: true, // a pad — the mouse is meant to sit on top of it
+    resize: { axes: ['w', 'd'], min: { w: 0.2, d: 0.2 }, max: { w: 0.9, d: 0.45 }, step: 0.01 },
   },
 
   // ---- Speakers ----
@@ -144,6 +174,12 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [-0.5, -0.12],
     rests: 'desk',
+    resize: {
+      axes: ['w', 'h', 'd'],
+      min: { w: 0.1, h: 0.15, d: 0.1 },
+      max: { w: 0.35, h: 0.45, d: 0.35 },
+      step: 0.005,
+    },
   },
 
   // ---- Laptops ----
@@ -165,6 +201,7 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [-0.45, 0.1],
     rests: 'desk',
+    resize: { axes: ['w'], min: { w: 0.26 }, max: { w: 0.4 }, step: 0.005 },
   },
 
   // ---- PC Towers (stand on the floor beside the desk) ----
@@ -183,6 +220,12 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0.85, 0.05],
     rests: 'floor',
+    resize: {
+      axes: ['w', 'h', 'd'],
+      min: { w: 0.15, h: 0.28, d: 0.28 },
+      max: { w: 0.3, h: 0.6, d: 0.55 },
+      step: 0.01,
+    },
   },
 
   // ---- Lamps ----
@@ -201,6 +244,7 @@ export const CATALOG: CatalogItem[] = [
     defaultYRotation: 0,
     defaultSpawn: [0.5, -0.16],
     rests: 'desk',
+    resize: { axes: ['h'], min: { h: 0.3 }, max: { h: 0.7 }, step: 0.01 },
   },
 
   // ---- Decor ----

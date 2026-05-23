@@ -6,4 +6,6 @@ export interface ModelProps {
   dimensions: Vec3
   /** Colorway colors keyed by role (e.g. body/accent/top/frame/screen). */
   colors: Record<string, string>
+  /** Boolean toggle states (e.g. { stand: false }). */
+  options?: Record<string, boolean>
 }
