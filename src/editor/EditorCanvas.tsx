@@ -4,6 +4,7 @@ import { type Ref } from 'react'
 import Lighting from './Lighting'
 import Floor from './Floor'
 import Scene from './Scene'
+import Screenshot from './Screenshot'
 import { INITIAL_CAMERA, type EditorControls } from './cameraConfig'
 import { useEditorStore } from '../store/useEditorStore'
 
@@ -26,6 +27,7 @@ export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorC
       <Lighting />
       <Floor />
       <Scene />
+      <Screenshot />
 
       <OrbitControls
         ref={controlsRef}

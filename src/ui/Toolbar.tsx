@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useEditorStore } from '../store/useEditorStore'
 import { buildShareUrl } from '../persistence/shareLink'
+import { requestCapture } from '../editor/captureBridge'
 
 const btn =
   'rounded-md bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-zinc-900'
@@ -77,6 +78,9 @@ export default function Toolbar({ onResetCamera }: { onResetCamera: () => void }
 
       <button type="button" className={btn} onClick={onShare}>
         Share
+      </button>
+      <button type="button" className={btn} onClick={() => requestCapture()}>
+        Screenshot
       </button>
       <button
         type="button"
