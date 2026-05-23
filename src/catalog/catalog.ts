@@ -96,7 +96,10 @@ export const CATALOG: CatalogItem[] = [
       max: { w: 1.2, h: 0.6 },
       step: 0.01,
     },
-    options: [{ id: 'stand', label: 'Stand', default: true }],
+    options: [
+      { id: 'stand', label: 'Stand', default: true },
+      { id: 'portrait', label: 'Portrait', default: false },
+    ],
     elevatable: { min: 0, max: 0.5, step: 0.01 },
   },
 
