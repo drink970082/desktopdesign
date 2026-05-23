@@ -1,8 +1,11 @@
+import { lazy, Suspense } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import Landing from './routes/Landing'
 import About from './routes/About'
-import Create from './routes/Create'
 import { toggleTheme, useTheme } from './theme/useTheme'
+
+// Code-split the 3D editor so three.js/R3F only load when visiting /create.
+const Create = lazy(() => import('./routes/Create'))
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -42,12 +45,25 @@ function Nav() {
 
 export default function App() {
   return (
-    <div className="flex min-h-full flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex h-dvh flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <Nav />
-      <main className="min-h-0 flex-1">
+      <main className="min-h-0 flex-1 overflow-auto">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/create" element={<Create />} />
+          <Route
+            path="/create"
+            element={
+              <Suspense
+                fallback={
+                  <div className="grid h-full place-items-center text-zinc-500 dark:text-zinc-400">
+                    Loading editor…
+                  </div>
+                }
+              >
+                <Create />
+              </Suspense>
+            }
+          />
           <Route path="/about" element={<About />} />
         </Routes>
       </main>
