@@ -13,6 +13,7 @@ export type CatalogCategory =
   | 'lamp'
   | 'decor'
   | 'chair'
+  | 'custom'
 
 /** How an item is drawn: a procedural component (by key) or a loaded GLB file. */
 export type Renderer =

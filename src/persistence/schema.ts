@@ -24,6 +24,8 @@ export interface SetupObjectV2 {
   cd?: { w?: number; h?: number; d?: number } // customDims
   o?: Record<string, boolean> // options
   e?: number // elevation
+  n?: string // label (display name)
+  u?: string // product URL
   p: [number, number] // x, z (Y derived on load)
   r: number // rotationY
 }

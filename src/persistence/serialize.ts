@@ -45,6 +45,8 @@ export function toSetup(s: StoreSnapshot): SetupV2 {
       if (cd) obj.cd = cd
       if (o.options && Object.keys(o.options).length) obj.o = o.options
       if (o.elevation) obj.e = round(o.elevation)
+      if (o.label) obj.n = o.label
+      if (o.url) obj.u = o.url
       return obj
     }),
   }

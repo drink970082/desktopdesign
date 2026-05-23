@@ -12,6 +12,7 @@ import { Lamp } from './Lamp'
 import { Book } from './Book'
 import { CoffeeCup } from './CoffeeCup'
 import { SimpleChair } from './SimpleChair'
+import { CustomBox } from './CustomBox'
 
 /** Maps a procedural modelKey (from a CatalogItem's renderer) to its component. */
 export const PROCEDURAL_MODELS: Record<string, FC<ModelProps>> = {
@@ -27,4 +28,5 @@ export const PROCEDURAL_MODELS: Record<string, FC<ModelProps>> = {
   book: Book,
   coffeeCup: CoffeeCup,
   chair: SimpleChair,
+  customBox: CustomBox,
 }

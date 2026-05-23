@@ -13,6 +13,7 @@ export const CATEGORY_ORDER: CatalogCategory[] = [
   'lamp',
   'decor',
   'chair',
+  'custom',
 ]
 
 export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
@@ -27,4 +28,5 @@ export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
   lamp: 'Lamps',
   decor: 'Decor',
   chair: 'Chairs',
+  custom: 'Custom',
 }

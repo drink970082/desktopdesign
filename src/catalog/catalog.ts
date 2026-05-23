@@ -315,6 +315,32 @@ export const CATALOG: CatalogItem[] = [
     defaultSpawn: [0, 0.65],
     rests: 'floor',
   },
+
+  // ---- Custom (a generic resizable box you name + attach a product link to) ----
+  {
+    id: 'customBox',
+    category: 'custom',
+    name: 'Custom Box',
+    renderer: { kind: 'procedural', modelKey: 'customBox' },
+    sizeOptions: [{ id: 'std', label: 'Box', dimensions: [0.2, 0.2, 0.2] }],
+    defaultSizeId: 'std',
+    colorways: [
+      { id: 'gray', label: 'Gray', colors: { body: '#8a8d92' } },
+      { id: 'black', label: 'Black', colors: { body: '#26262a' } },
+      { id: 'white', label: 'White', colors: { body: '#e9e9ec' } },
+    ],
+    defaultColorwayId: 'gray',
+    defaultYRotation: 0,
+    defaultSpawn: [0.2, 0],
+    rests: 'desk',
+    primaryColorRole: 'body',
+    resize: {
+      axes: ['w', 'h', 'd'],
+      min: { w: 0.05, h: 0.05, d: 0.05 },
+      max: { w: 1.0, h: 1.0, d: 1.0 },
+      step: 0.01,
+    },
+  },
 ]
 
 export const CATALOG_BY_ID: Record<string, CatalogItem> = Object.fromEntries(

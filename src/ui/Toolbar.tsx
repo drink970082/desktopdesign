@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useEditorStore } from '../store/useEditorStore'
 import { buildShareUrl } from '../persistence/shareLink'
 import { requestCapture } from '../editor/captureBridge'
+import ShoppingList from './ShoppingList'
 
 const btn =
   'rounded-md bg-zinc-900/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-zinc-900'
@@ -18,6 +19,7 @@ export default function Toolbar({ onResetCamera }: { onResetCamera: () => void }
 
   const [name, setName] = useState('')
   const [msg, setMsg] = useState('')
+  const [showList, setShowList] = useState(false)
   const names = Object.keys(savedSetups).sort()
 
   function flash(text: string) {
@@ -44,7 +46,7 @@ export default function Toolbar({ onResetCamera }: { onResetCamera: () => void }
   }
 
   return (
-    <div className="pointer-events-auto flex flex-wrap items-center gap-2">
+    <div className="pointer-events-auto relative flex flex-wrap items-center gap-2">
       <button type="button" className={btn} onClick={onResetCamera}>
         Reset camera
       </button>
@@ -82,6 +84,9 @@ export default function Toolbar({ onResetCamera }: { onResetCamera: () => void }
       <button type="button" className={btn} onClick={() => requestCapture()}>
         Screenshot
       </button>
+      <button type="button" className={btn} onClick={() => setShowList((v) => !v)}>
+        Shopping list
+      </button>
       <button
         type="button"
         className={btn}
@@ -97,6 +102,7 @@ export default function Toolbar({ onResetCamera }: { onResetCamera: () => void }
           {msg}
         </span>
       )}
+      {showList && <ShoppingList onClose={() => setShowList(false)} />}
     </div>
   )
 }

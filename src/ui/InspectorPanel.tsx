@@ -12,6 +12,7 @@ const AXIS_META: Record<ResizeAxis, { label: string; index: 0 | 1 | 2 }> = {
 
 const selectClass =
   'w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+const inputClass = selectClass
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -159,6 +160,8 @@ export default function InspectorPanel() {
   const setElevation = useEditorStore((s) => s.setElevation)
   const resetCustomization = useEditorStore((s) => s.resetCustomization)
   const duplicate = useEditorStore((s) => s.duplicate)
+  const setLabel = useEditorStore((s) => s.setLabel)
+  const setUrl = useEditorStore((s) => s.setUrl)
   const remove = useEditorStore((s) => s.remove)
   const transformMode = useEditorStore((s) => s.transformMode)
   const toggleMode = useEditorStore((s) => s.toggleMode)
@@ -188,6 +191,25 @@ export default function InspectorPanel() {
           return (
             <>
               <h2 className="mb-3 text-sm font-semibold">{item.name}</h2>
+
+              <Field label="Name">
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={selected.label ?? ''}
+                  placeholder={item.name}
+                  onChange={(e) => setLabel(selected.id, e.target.value)}
+                />
+              </Field>
+              <Field label="Product link">
+                <input
+                  type="url"
+                  className={inputClass}
+                  value={selected.url ?? ''}
+                  placeholder="https://amazon.com/…"
+                  onChange={(e) => setUrl(selected.id, e.target.value)}
+                />
+              </Field>
 
               <Field label="Transform">
                 <button

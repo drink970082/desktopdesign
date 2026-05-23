@@ -436,6 +436,8 @@ export const useEditorStore = create<EditorState>()(
               customDims: o.cd,
               options: o.o,
               elevation: o.e,
+              label: o.n,
+              url: o.u,
               position: [o.p[0], restingY(item.rests, surfaceY) + (o.e ?? 0), o.p[1]] as Vec3,
               rotationY: o.r,
             }
