@@ -3,9 +3,12 @@ import { OrbitControls } from '@react-three/drei'
 import { type Ref } from 'react'
 import Lighting from './Lighting'
 import Floor from './Floor'
+import Scene from './Scene'
 import { INITIAL_CAMERA, type EditorControls } from './cameraConfig'
+import { useEditorStore } from '../store/useEditorStore'
 
 export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorControls> }) {
+  const select = useEditorStore((s) => s.select)
   return (
     <Canvas
       shadows
@@ -13,18 +16,15 @@ export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorC
       // preserveDrawingBuffer lets us read pixels for PNG export later.
       gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }}
       camera={{ fov: 45, near: 0.05, far: 100, position: INITIAL_CAMERA.position }}
+      // Fires when a click hits no object → deselect.
+      onPointerMissed={() => select(null)}
     >
       <color attach="background" args={['#2a363b']} />
       <fog attach="fog" args={['#2a363b', 9, 22]} />
 
       <Lighting />
       <Floor />
-
-      {/* TEMP placeholder desk slab — replaced by real scene objects in a later step. */}
-      <mesh position={[0, 0.74, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.2, 0.03, 0.6]} />
-        <meshStandardMaterial color="#9c6b3f" roughness={0.7} />
-      </mesh>
+      <Scene />
 
       <OrbitControls
         ref={controlsRef}
