@@ -112,6 +112,12 @@ export interface SceneObject {
   options?: Record<string, boolean>
   /** Extra Y above the rest plane (mount height). */
   elevation?: number
+  /** Hidden from the scene (transient; not serialized). */
+  hidden?: boolean
+  /** Optional display name (used by custom items + the objects/shopping list). */
+  label?: string
+  /** Optional product/Amazon URL (feeds the shopping list). */
+  url?: string
 }
 
 export type TransformMode = 'translate' | 'rotate'

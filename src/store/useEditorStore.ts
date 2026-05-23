@@ -102,6 +102,9 @@ interface EditorState {
   toggleOption: (id: string, optId: string) => void
   setElevation: (id: string, value: number) => void
   resetCustomization: (id: string) => void
+  toggleHidden: (id: string) => void
+  setLabel: (id: string, value: string) => void
+  setUrl: (id: string, value: string) => void
 
   // desk
   swapDesk: (catalogId: string) => void
@@ -306,6 +309,24 @@ export const useEditorStore = create<EditorState>()(
         delete o.options
         o.elevation = undefined
         o.position = [o.position[0], restingY(item.rests, s.deskSurfaceY), o.position[2]]
+      }),
+
+    toggleHidden: (id) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (o) o.hidden = !o.hidden
+      }),
+
+    setLabel: (id, value) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (o) o.label = value || undefined
+      }),
+
+    setUrl: (id, value) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (o) o.url = value || undefined
       }),
 
     swapDesk: (catalogId) =>

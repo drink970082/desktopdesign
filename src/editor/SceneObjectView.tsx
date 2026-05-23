@@ -36,6 +36,8 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
     return () => unregisterObject3D(obj.id)
   }, [obj.id, node])
 
+  if (obj.hidden) return null
+
   const item = getItem(obj.catalogId)
   const dimensions = effectiveDimensions(item, obj)
   const colors = effectiveColors(item, obj)
