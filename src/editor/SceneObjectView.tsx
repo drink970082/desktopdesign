@@ -2,7 +2,8 @@ import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import type { Group } from 'three'
 import { TransformControls } from '@react-three/drei'
 import type { SceneObject } from '../store/types'
-import { getColorway, getItem, getSize } from '../catalog/catalog'
+import { getItem } from '../catalog/catalog'
+import { effectiveColors, effectiveDimensions, effectiveOptions } from '../catalog/customize'
 import { PROCEDURAL_MODELS } from '../models/registry'
 import { GLBModel } from '../models/GLBModel'
 import { useEditorStore } from '../store/useEditorStore'
@@ -36,18 +37,19 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
   }, [obj.id, node])
 
   const item = getItem(obj.catalogId)
-  const size = getSize(item, obj.sizeId)
-  const colors = getColorway(item, obj.colorwayId)?.colors ?? {}
+  const dimensions = effectiveDimensions(item, obj)
+  const colors = effectiveColors(item, obj)
+  const options = effectiveOptions(item, obj)
 
   let modelEl: ReactNode = null
   if (item.renderer.kind === 'procedural') {
     const Model = PROCEDURAL_MODELS[item.renderer.modelKey]
-    if (Model) modelEl = <Model dimensions={size.dimensions} colors={colors} />
+    if (Model) modelEl = <Model dimensions={dimensions} colors={colors} options={options} />
   } else {
     // GLB loads on demand; its own Suspense keeps the rest of the scene visible.
     modelEl = (
       <Suspense fallback={null}>
-        <GLBModel url={item.renderer.url} dimensions={size.dimensions} />
+        <GLBModel url={item.renderer.url} dimensions={dimensions} />
       </Suspense>
     )
   }

@@ -1,14 +1,16 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { CATALOG_BY_ID, getItem } from '../catalog/catalog'
+import { CATALOG_BY_ID, getItem, getSize } from '../catalog/catalog'
+import { clampAxis } from '../catalog/customize'
 import {
   loadSavedSetups,
   persistSavedSetups,
   type SavedSetupsMap,
 } from '../persistence/savedSetups'
-import type { SetupV1 } from '../persistence/schema'
+import type { AnySetup, SetupV2 } from '../persistence/schema'
+import { normalizeSetup } from '../persistence/migrate'
 import { toSetup } from '../persistence/serialize'
-import type { GizmoAxis, SceneObject, TransformMode, Vec3 } from './types'
+import type { GizmoAxis, ResizeAxis, SceneObject, TransformMode, Vec3 } from './types'
 
 function newId(): string {
   return crypto.randomUUID()
@@ -19,22 +21,39 @@ function restingY(rests: 'desk' | 'floor', deskSurfaceY: number): number {
   return rests === 'floor' ? 0 : deskSurfaceY
 }
 
-function deskHeightOf(deskId: string, sizeId: string): number {
-  const desk = getItem(deskId)
-  const size = desk.sizeOptions.find((s) => s.id === sizeId) ?? desk.sizeOptions[0]
-  return size.dimensions[1]
+/** Re-derive every object's Y from the current desk surface + its own elevation. */
+function reseat(s: { objects: SceneObject[]; deskSurfaceY: number }) {
+  for (const o of s.objects) {
+    const item = getItem(o.catalogId)
+    o.position = [o.position[0], restingY(item.rests, s.deskSurfaceY) + (o.elevation ?? 0), o.position[2]]
+  }
 }
 
 const DEFAULT_DESK_ID = 'modernDesk'
-const DEFAULT_DESK_SIZE = 'm'
+
+function deskDefaults(deskId: string) {
+  const desk = getItem(deskId)
+  const size = getSize(desk, desk.defaultSizeId)
+  return {
+    width: size.dimensions[0],
+    height: size.dimensions[1],
+    depth: size.dimensions[2],
+    colorwayId: desk.defaultColorwayId ?? '',
+  }
+}
+
+const DD = deskDefaults(DEFAULT_DESK_ID)
 
 interface EditorState {
   // scene
   objects: SceneObject[]
   selectedId: string | null
   deskCatalogId: string
-  deskSizeId: string
+  deskWidth: number
+  deskDepth: number
+  deskHeight: number
   deskColorwayId: string
+  deskCustomColor?: string
   deskSurfaceY: number
 
   // gizmo / interaction
@@ -46,7 +65,7 @@ interface EditorState {
   // persistence
   savedSetups: SavedSetupsMap
 
-  // actions
+  // object actions
   add: (catalogId: string, sizeId?: string, colorwayId?: string) => void
   remove: (id: string) => void
   removeSelected: () => void
@@ -62,15 +81,26 @@ interface EditorState {
   setSize: (id: string, sizeId: string) => void
   setColorway: (id: string, colorwayId: string) => void
 
-  swapDesk: (catalogId: string, sizeId?: string) => void
+  // per-object customization
+  setCustomDim: (id: string, axis: ResizeAxis, value: number) => void
+  setCustomColor: (id: string, hex: string | undefined) => void
+  toggleOption: (id: string, optId: string) => void
+  setElevation: (id: string, value: number) => void
+  resetCustomization: (id: string) => void
+
+  // desk
+  swapDesk: (catalogId: string) => void
+  setDeskSizePreset: (sizeId: string) => void
+  setDeskDimension: (axis: ResizeAxis, value: number) => void
   setDeskColorway: (colorwayId: string) => void
+  setDeskCustomColor: (hex: string | undefined) => void
 
   reset: () => void
   loadDefaultScene: () => void
 
   // serialization / persistence
-  exportSetup: () => SetupV1
-  loadSetup: (setup: SetupV1) => void
+  exportSetup: () => SetupV2
+  loadSetup: (setup: AnySetup) => void
   saveNamed: (name: string) => void
   deleteNamed: (name: string) => void
 }
@@ -80,9 +110,12 @@ export const useEditorStore = create<EditorState>()(
     objects: [],
     selectedId: null,
     deskCatalogId: DEFAULT_DESK_ID,
-    deskSizeId: DEFAULT_DESK_SIZE,
-    deskColorwayId: getItem(DEFAULT_DESK_ID).defaultColorwayId ?? '',
-    deskSurfaceY: deskHeightOf(DEFAULT_DESK_ID, DEFAULT_DESK_SIZE),
+    deskWidth: DD.width,
+    deskDepth: DD.depth,
+    deskHeight: DD.height,
+    deskColorwayId: DD.colorwayId,
+    deskCustomColor: undefined,
+    deskSurfaceY: DD.height,
 
     transformMode: 'translate',
     gizmoAxis: { x: true, y: false, z: true },
@@ -94,13 +127,12 @@ export const useEditorStore = create<EditorState>()(
     add: (catalogId, sizeId, colorwayId) =>
       set((s) => {
         const item = getItem(catalogId)
-        const y = restingY(item.rests, s.deskSurfaceY)
         const obj: SceneObject = {
           id: newId(),
           catalogId,
           sizeId: sizeId ?? item.defaultSizeId,
           colorwayId: colorwayId ?? item.defaultColorwayId,
-          position: [item.defaultSpawn[0], y, item.defaultSpawn[1]],
+          position: [item.defaultSpawn[0], restingY(item.rests, s.deskSurfaceY), item.defaultSpawn[1]],
           rotationY: item.defaultYRotation,
         }
         s.objects.push(obj)
@@ -126,7 +158,6 @@ export const useEditorStore = create<EditorState>()(
     setTransformMode: (m) =>
       set((s) => {
         s.transformMode = m
-        // translate slides on the rest plane (X/Z); rotate spins about Y only.
         s.gizmoAxis =
           m === 'rotate' ? { x: false, y: true, z: false } : { x: true, y: false, z: true }
       }),
@@ -155,42 +186,128 @@ export const useEditorStore = create<EditorState>()(
         const o = s.objects.find((x) => x.id === id)
         if (!o) return
         const item = getItem(o.catalogId)
-        // Y stays locked to the rest plane regardless of any gizmo Y movement.
-        o.position = [position[0], restingY(item.rests, s.deskSurfaceY), position[2]]
+        o.position = [
+          position[0],
+          restingY(item.rests, s.deskSurfaceY) + (o.elevation ?? 0),
+          position[2],
+        ]
         o.rotationY = rotationY
       }),
 
     setSize: (id, sizeId) =>
       set((s) => {
         const o = s.objects.find((x) => x.id === id)
-        if (o) o.sizeId = sizeId
+        if (o) {
+          o.sizeId = sizeId
+          delete o.customDims // a chosen preset replaces any free resizing
+        }
       }),
 
     setColorway: (id, colorwayId) =>
       set((s) => {
         const o = s.objects.find((x) => x.id === id)
-        if (o) o.colorwayId = colorwayId
+        if (o) {
+          o.colorwayId = colorwayId
+          delete o.customColor // a chosen preset replaces a custom color
+        }
       }),
 
-    swapDesk: (catalogId, sizeId) =>
+    setCustomDim: (id, axis, value) =>
       set((s) => {
-        const desk = getItem(catalogId)
-        const sid = sizeId ?? desk.defaultSizeId
-        s.deskCatalogId = catalogId
-        s.deskSizeId = sid
-        s.deskColorwayId = desk.defaultColorwayId ?? s.deskColorwayId
-        const surfaceY = deskHeightOf(catalogId, sid)
-        s.deskSurfaceY = surfaceY
-        // Re-seat every desk-resting object onto the new surface height.
-        for (const o of s.objects) {
-          const item = getItem(o.catalogId)
-          o.position = [o.position[0], restingY(item.rests, surfaceY), o.position[2]]
+        const o = s.objects.find((x) => x.id === id)
+        if (!o) return
+        const v = clampAxis(getItem(o.catalogId), axis, value)
+        o.customDims = { ...(o.customDims ?? {}), [axis]: v }
+      }),
+
+    setCustomColor: (id, hex) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (!o) return
+        if (hex) o.customColor = hex
+        else delete o.customColor
+      }),
+
+    toggleOption: (id, optId) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (!o) return
+        const item = getItem(o.catalogId)
+        const def = item.options?.find((x) => x.id === optId)?.default ?? false
+        const cur = o.options?.[optId] ?? def
+        o.options = { ...(o.options ?? {}), [optId]: !cur }
+      }),
+
+    setElevation: (id, value) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (!o) return
+        const item = getItem(o.catalogId)
+        const min = item.elevatable?.min ?? 0
+        const max = item.elevatable?.max ?? 0
+        const v = Math.min(max, Math.max(min, value))
+        o.elevation = v
+        o.position = [o.position[0], restingY(item.rests, s.deskSurfaceY) + v, o.position[2]]
+      }),
+
+    resetCustomization: (id) =>
+      set((s) => {
+        const o = s.objects.find((x) => x.id === id)
+        if (!o) return
+        const item = getItem(o.catalogId)
+        delete o.customDims
+        delete o.customColor
+        delete o.options
+        o.elevation = undefined
+        o.position = [o.position[0], restingY(item.rests, s.deskSurfaceY), o.position[2]]
+      }),
+
+    swapDesk: (catalogId) =>
+      set((s) => {
+        const id = CATALOG_BY_ID[catalogId] ? catalogId : DEFAULT_DESK_ID
+        const desk = getItem(id)
+        const size = getSize(desk, desk.defaultSizeId)
+        s.deskCatalogId = id
+        s.deskWidth = size.dimensions[0]
+        s.deskDepth = size.dimensions[2]
+        s.deskHeight = size.dimensions[1]
+        s.deskColorwayId = desk.defaultColorwayId ?? ''
+        s.deskCustomColor = undefined
+        s.deskSurfaceY = size.dimensions[1]
+        reseat(s)
+      }),
+
+    setDeskSizePreset: (sizeId) =>
+      set((s) => {
+        const size = getSize(getItem(s.deskCatalogId), sizeId)
+        s.deskWidth = size.dimensions[0]
+        s.deskDepth = size.dimensions[2]
+        s.deskHeight = size.dimensions[1]
+        s.deskSurfaceY = size.dimensions[1]
+        reseat(s)
+      }),
+
+    setDeskDimension: (axis, value) =>
+      set((s) => {
+        const v = clampAxis(getItem(s.deskCatalogId), axis, value)
+        if (axis === 'w') s.deskWidth = v
+        else if (axis === 'd') s.deskDepth = v
+        else {
+          s.deskHeight = v
+          s.deskSurfaceY = v
+          reseat(s)
         }
       }),
 
     setDeskColorway: (colorwayId) =>
       set((s) => {
         s.deskColorwayId = colorwayId
+        s.deskCustomColor = undefined
+      }),
+
+    setDeskCustomColor: (hex) =>
+      set((s) => {
+        s.deskCustomColor = hex || undefined
       }),
 
     reset: () =>
@@ -215,25 +332,28 @@ export const useEditorStore = create<EditorState>()(
       const s = get()
       return toSetup({
         deskCatalogId: s.deskCatalogId,
-        deskSizeId: s.deskSizeId,
+        deskWidth: s.deskWidth,
+        deskDepth: s.deskDepth,
+        deskHeight: s.deskHeight,
         deskColorwayId: s.deskColorwayId,
+        deskCustomColor: s.deskCustomColor,
         objects: s.objects,
       })
     },
 
-    loadSetup: (setup) =>
+    loadSetup: (raw) => {
+      const setup = normalizeSetup(raw)
+      if (!setup) return
       set((s) => {
-        // Defensive: fall back to defaults for unknown desks, skip unknown items.
         const deskId = CATALOG_BY_ID[setup.desk.c] ? setup.desk.c : DEFAULT_DESK_ID
         const desk = getItem(deskId)
-        const deskSizeId = desk.sizeOptions.some((o) => o.id === setup.desk.s)
-          ? setup.desk.s
-          : desk.defaultSizeId
-        const surfaceY = deskHeightOf(deskId, deskSizeId)
-
+        const surfaceY = setup.desk.ht
         s.deskCatalogId = deskId
-        s.deskSizeId = deskSizeId
-        s.deskColorwayId = setup.desk.w ?? desk.defaultColorwayId ?? ''
+        s.deskWidth = setup.desk.w
+        s.deskDepth = setup.desk.dp
+        s.deskHeight = setup.desk.ht
+        s.deskColorwayId = setup.desk.cw ?? desk.defaultColorwayId ?? ''
+        s.deskCustomColor = setup.desk.cc
         s.deskSurfaceY = surfaceY
         s.selectedId = null
         s.objects = setup.objects
@@ -245,11 +365,16 @@ export const useEditorStore = create<EditorState>()(
               catalogId: o.c,
               sizeId: o.s,
               colorwayId: o.w,
-              position: [o.p[0], restingY(item.rests, surfaceY), o.p[1]] as Vec3,
+              customColor: o.cc,
+              customDims: o.cd,
+              options: o.o,
+              elevation: o.e,
+              position: [o.p[0], restingY(item.rests, surfaceY) + (o.e ?? 0), o.p[1]] as Vec3,
               rotationY: o.r,
             }
           })
-      }),
+      })
+    },
 
     saveNamed: (name) => {
       const data = get().exportSetup()

@@ -1,33 +1,25 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
-import { SCHEMA_VERSION, type SetupV1 } from './schema'
+import type { SetupV2 } from './schema'
+import { normalizeSetup } from './migrate'
 
 /** Compress a setup into a URL-safe string for the share link's hash query. */
-export function encodeSetup(setup: SetupV1): string {
+export function encodeSetup(setup: SetupV2): string {
   return compressToEncodedURIComponent(JSON.stringify(setup))
 }
 
-/** Decode + validate a share string. Returns null on any corruption or version mismatch. */
-export function decodeSetup(code: string): SetupV1 | null {
+/** Decode + validate + migrate a share string. Returns null on any corruption. */
+export function decodeSetup(code: string): SetupV2 | null {
   try {
     const json = decompressFromEncodedURIComponent(code)
     if (!json) return null
-    const data = JSON.parse(json)
-    if (
-      !data ||
-      data.v !== SCHEMA_VERSION ||
-      typeof data.desk !== 'object' ||
-      !Array.isArray(data.objects)
-    ) {
-      return null
-    }
-    return data as SetupV1
+    return normalizeSetup(JSON.parse(json))
   } catch {
     return null
   }
 }
 
 /** Full shareable URL for the current setup (lives in the hash so GH Pages serves it). */
-export function buildShareUrl(setup: SetupV1): string {
+export function buildShareUrl(setup: SetupV2): string {
   return `${window.location.origin}${window.location.pathname}#/create?s=${encodeSetup(setup)}`
 }
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import type { Object3D } from 'three'
-import { getItem, getSize } from '../catalog/catalog'
+import { getItem } from '../catalog/catalog'
 import { useEditorStore } from '../store/useEditorStore'
 import { getObject3D } from './objectRegistry'
 
@@ -22,8 +22,8 @@ function worldBox(obj: Object3D, target: THREE.Box3) {
 /** Clamp the moving object's center so its footprint stays on the desk surface. */
 function clampToDesk(node: Object3D, halfX: number, halfZ: number) {
   const s = useEditorStore.getState()
-  const desk = getItem(s.deskCatalogId)
-  const [dw, , dd] = getSize(desk, s.deskSizeId).dimensions
+  const dw = s.deskWidth
+  const dd = s.deskDepth
   const margin = 0.01
   node.position.x = clamp(node.position.x, -dw / 2 + halfX + margin, dw / 2 - halfX - margin)
   node.position.z = clamp(node.position.z, -dd / 2 + halfZ + margin, dd / 2 - halfZ - margin)
