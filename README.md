@@ -34,13 +34,12 @@ Hosted on **GitHub Pages** at `https://drink970082.github.io/desktopdesign/`. Th
 is `/desktopdesign/` and routing uses `HashRouter`, so deep links and refreshes work without
 server rewrites.
 
-Publish the current build to the `gh-pages` branch:
+**Automatic (primary):** every push to `main` triggers `.github/workflows/deploy.yml`, which
+builds and publishes to Pages (Pages source = "GitHub Actions").
+
+**Manual fallback:** publish the current build straight to the `gh-pages` branch:
 
 ```bash
 npm run build
 npm run deploy   # gh-pages -d dist (includes .nojekyll)
 ```
-
-Prefer push-to-deploy via GitHub Actions instead? A ready workflow is in
-`deploy/github-pages-workflow.yml` — move it to `.github/workflows/` (requires a token with the
-`workflow` scope) and set the repo's Pages source to "GitHub Actions".
