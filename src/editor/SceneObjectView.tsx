@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import type { Group } from 'three'
 import { TransformControls } from '@react-three/drei'
 import type { SceneObject } from '../store/types'
 import { getColorway, getItem, getSize } from '../catalog/catalog'
 import { PROCEDURAL_MODELS } from '../models/registry'
+import { GLBModel } from '../models/GLBModel'
 import { useEditorStore } from '../store/useEditorStore'
 import { registerObject3D, unregisterObject3D } from './objectRegistry'
 import { applySnapAndCollision } from './snap'
@@ -38,9 +39,19 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
   const size = getSize(item, obj.sizeId)
   const colors = getColorway(item, obj.colorwayId)?.colors ?? {}
 
-  if (item.renderer.kind !== 'procedural') return null // GLB models handled later
-  const Model = PROCEDURAL_MODELS[item.renderer.modelKey]
-  if (!Model) return null
+  let modelEl: ReactNode = null
+  if (item.renderer.kind === 'procedural') {
+    const Model = PROCEDURAL_MODELS[item.renderer.modelKey]
+    if (Model) modelEl = <Model dimensions={size.dimensions} colors={colors} />
+  } else {
+    // GLB loads on demand; its own Suspense keeps the rest of the scene visible.
+    modelEl = (
+      <Suspense fallback={null}>
+        <GLBModel url={item.renderer.url} dimensions={size.dimensions} />
+      </Suspense>
+    )
+  }
+  if (!modelEl) return null
 
   return (
     <>
@@ -54,7 +65,7 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
           select(obj.id)
         }}
       >
-        <Model dimensions={size.dimensions} colors={colors} />
+        {modelEl}
       </group>
 
       {isSelected && node && (

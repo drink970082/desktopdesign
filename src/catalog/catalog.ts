@@ -127,6 +127,147 @@ export const CATALOG: CatalogItem[] = [
     rests: 'desk',
     noCollide: true, // a pad — the mouse is meant to sit on top of it
   },
+
+  // ---- Speakers ----
+  {
+    id: 'speaker',
+    category: 'speaker',
+    name: 'Speaker',
+    renderer: { kind: 'procedural', modelKey: 'speaker' },
+    sizeOptions: [
+      { id: 'bookshelf', label: 'Bookshelf', dimensions: [0.15, 0.24, 0.19] },
+      { id: 'studio', label: 'Studio monitor', dimensions: [0.18, 0.28, 0.24] },
+    ],
+    defaultSizeId: 'bookshelf',
+    colorways: DEVICE_COLORWAYS,
+    defaultColorwayId: 'black',
+    defaultYRotation: 0,
+    defaultSpawn: [-0.5, -0.12],
+    rests: 'desk',
+  },
+
+  // ---- Laptops ----
+  {
+    id: 'laptop',
+    category: 'laptop',
+    name: 'Laptop',
+    renderer: { kind: 'procedural', modelKey: 'laptop' },
+    sizeOptions: [
+      { id: '13', label: '13"', dimensions: [0.3, 0.2, 0.21] },
+      { id: '15', label: '15"', dimensions: [0.34, 0.22, 0.24] },
+    ],
+    defaultSizeId: '15',
+    colorways: [
+      { id: 'silver', label: 'Silver', colors: { body: '#b9bdc2' } },
+      { id: 'spacegray', label: 'Space Gray', colors: { body: '#5c5f63' } },
+    ],
+    defaultColorwayId: 'silver',
+    defaultYRotation: 0,
+    defaultSpawn: [-0.45, 0.1],
+    rests: 'desk',
+  },
+
+  // ---- PC Towers (stand on the floor beside the desk) ----
+  {
+    id: 'tower',
+    category: 'tower',
+    name: 'PC Tower',
+    renderer: { kind: 'procedural', modelKey: 'tower' },
+    sizeOptions: [
+      { id: 'mid', label: 'Mid tower', dimensions: [0.21, 0.45, 0.42] },
+      { id: 'mini', label: 'Mini-ITX', dimensions: [0.2, 0.32, 0.34] },
+    ],
+    defaultSizeId: 'mid',
+    colorways: DEVICE_COLORWAYS,
+    defaultColorwayId: 'black',
+    defaultYRotation: 0,
+    defaultSpawn: [0.85, 0.05],
+    rests: 'floor',
+  },
+
+  // ---- Lamps ----
+  {
+    id: 'lamp',
+    category: 'lamp',
+    name: 'Desk Lamp',
+    renderer: { kind: 'procedural', modelKey: 'lamp' },
+    sizeOptions: [{ id: 'std', label: 'Standard', dimensions: [0.13, 0.45, 0.2] }],
+    defaultSizeId: 'std',
+    colorways: [
+      { id: 'black', label: 'Black', colors: { body: '#2b2b30', accent: '#e7e3d8' } },
+      { id: 'white', label: 'White', colors: { body: '#d8d8dc', accent: '#fff6e0' } },
+    ],
+    defaultColorwayId: 'black',
+    defaultYRotation: 0,
+    defaultSpawn: [0.5, -0.16],
+    rests: 'desk',
+  },
+
+  // ---- Decor ----
+  {
+    id: 'book',
+    category: 'decor',
+    name: 'Book',
+    renderer: { kind: 'procedural', modelKey: 'book' },
+    sizeOptions: [{ id: 'std', label: 'Hardcover', dimensions: [0.16, 0.035, 0.22] }],
+    defaultSizeId: 'std',
+    colorways: [
+      { id: 'brown', label: 'Brown', colors: { body: '#7b4a3a' } },
+      { id: 'blue', label: 'Blue', colors: { body: '#36506e' } },
+      { id: 'green', label: 'Green', colors: { body: '#3c6149' } },
+    ],
+    defaultColorwayId: 'brown',
+    defaultYRotation: 0,
+    defaultSpawn: [-0.55, 0.06],
+    rests: 'desk',
+  },
+  {
+    id: 'coffeeCup',
+    category: 'decor',
+    name: 'Coffee Cup',
+    renderer: { kind: 'procedural', modelKey: 'coffeeCup' },
+    sizeOptions: [{ id: 'std', label: 'Mug', dimensions: [0.09, 0.1, 0.09] }],
+    defaultSizeId: 'std',
+    colorways: [
+      { id: 'white', label: 'White', colors: { body: '#e8e8ea' } },
+      { id: 'black', label: 'Black', colors: { body: '#26262a' } },
+    ],
+    defaultColorwayId: 'white',
+    defaultYRotation: 0,
+    defaultSpawn: [0.45, 0.13],
+    rests: 'desk',
+  },
+
+  // ---- Chairs (sit on the floor in front of the desk) ----
+  {
+    id: 'accentChair',
+    category: 'chair',
+    name: 'Accent Chair',
+    // CC0 SheenChair by Wayfair, via the Khronos glTF Sample Assets.
+    renderer: { kind: 'glb', url: 'models/accent-chair.glb' },
+    sizeOptions: [{ id: 'std', label: 'Standard', dimensions: [0.65, 0.85, 0.65] }],
+    defaultSizeId: 'std',
+    defaultYRotation: Math.PI, // face the desk
+    defaultSpawn: [0, 0.65],
+    rests: 'floor',
+  },
+  {
+    id: 'simpleChair',
+    category: 'chair',
+    name: 'Simple Chair',
+    renderer: { kind: 'procedural', modelKey: 'chair' },
+    sizeOptions: [{ id: 'std', label: 'Standard', dimensions: [0.45, 0.9, 0.45] }],
+    defaultSizeId: 'std',
+    colorways: [
+      { id: 'gray', label: 'Gray', colors: { body: '#6b7280' } },
+      { id: 'black', label: 'Black', colors: { body: '#26262a' } },
+      { id: 'wood', label: 'Wood', colors: { body: '#9c6b3f' } },
+    ],
+    defaultColorwayId: 'gray',
+    defaultYRotation: Math.PI,
+    defaultSpawn: [0, 0.65],
+    rests: 'floor',
+  },
 ]
 
 export const CATALOG_BY_ID: Record<string, CatalogItem> = Object.fromEntries(
