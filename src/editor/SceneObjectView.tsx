@@ -1,27 +1,37 @@
-import { useEffect, useRef } from 'react'
-import * as THREE from 'three'
-import { useHelper } from '@react-three/drei'
+import { useEffect, useState } from 'react'
+import type { Group } from 'three'
+import { TransformControls } from '@react-three/drei'
 import type { SceneObject } from '../store/types'
 import { getColorway, getItem, getSize } from '../catalog/catalog'
 import { PROCEDURAL_MODELS } from '../models/registry'
 import { useEditorStore } from '../store/useEditorStore'
 import { registerObject3D, unregisterObject3D } from './objectRegistry'
+import SelectionBox from './SelectionBox'
 
-/** Renders one placed object from the store, handles selection, and registers its Object3D. */
+/**
+ * Renders one placed object from the store. When selected it also mounts the
+ * transform gizmo and a selection outline, both attached to this object's group.
+ *
+ * `node` is captured via a callback ref so the gizmo attaches once the group has
+ * actually mounted (the ref is null on the first render). The group's position is
+ * only re-applied on re-render — never per frame — so the gizmo owns the transform
+ * during a drag and we reconcile back into the store on mouse-up.
+ */
 export default function SceneObjectView({ obj }: { obj: SceneObject }) {
-  const groupRef = useRef<THREE.Group>(null!)
+  const [node, setNode] = useState<Group | null>(null)
   const select = useEditorStore((s) => s.select)
   const isSelected = useEditorStore((s) => s.selectedId === obj.id)
-
-  // Yellow bounding box around the current selection (accurate for any model).
-  useHelper(isSelected ? groupRef : null, THREE.BoxHelper, 0xfacc15)
+  const mode = useEditorStore((s) => s.transformMode)
+  const axis = useEditorStore((s) => s.gizmoAxis)
+  const gizmoSize = useEditorStore((s) => s.gizmoSize)
+  const setDragging = useEditorStore((s) => s.setDragging)
+  const updateTransform = useEditorStore((s) => s.updateTransform)
 
   useEffect(() => {
-    const g = groupRef.current
-    if (!g) return
-    registerObject3D(obj.id, g)
+    if (!node) return
+    registerObject3D(obj.id, node)
     return () => unregisterObject3D(obj.id)
-  }, [obj.id])
+  }, [obj.id, node])
 
   const item = getItem(obj.catalogId)
   const size = getSize(item, obj.sizeId)
@@ -32,17 +42,43 @@ export default function SceneObjectView({ obj }: { obj: SceneObject }) {
   if (!Model) return null
 
   return (
-    <group
-      ref={groupRef}
-      name={obj.id}
-      position={obj.position}
-      rotation={[0, obj.rotationY, 0]}
-      onClick={(e) => {
-        e.stopPropagation()
-        select(obj.id)
-      }}
-    >
-      <Model dimensions={size.dimensions} colors={colors} />
-    </group>
+    <>
+      <group
+        ref={setNode}
+        name={obj.id}
+        position={obj.position}
+        rotation={[0, obj.rotationY, 0]}
+        onClick={(e) => {
+          e.stopPropagation()
+          select(obj.id)
+        }}
+      >
+        <Model dimensions={size.dimensions} colors={colors} />
+      </group>
+
+      {isSelected && node && (
+        <>
+          <SelectionBox object={node} />
+          <TransformControls
+            object={node}
+            mode={mode}
+            showX={axis.x}
+            showY={axis.y}
+            showZ={axis.z}
+            size={gizmoSize}
+            space="world"
+            onMouseDown={() => setDragging(true)}
+            onMouseUp={() => {
+              setDragging(false)
+              updateTransform(
+                obj.id,
+                [node.position.x, node.position.y, node.position.z],
+                node.rotation.y,
+              )
+            }}
+          />
+        </>
+      )}
+    </>
   )
 }

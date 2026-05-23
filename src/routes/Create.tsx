@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react'
 import EditorCanvas from '../editor/EditorCanvas'
 import { INITIAL_CAMERA, type EditorControls } from '../editor/cameraConfig'
+import { useKeyboardShortcuts } from '../editor/useKeyboardShortcuts'
 import CatalogPanel from '../ui/CatalogPanel'
+import InspectorPanel from '../ui/InspectorPanel'
 import { useEditorStore } from '../store/useEditorStore'
 
 export default function Create() {
   const controlsRef = useRef<EditorControls>(null)
   const loadDefaultScene = useEditorStore((s) => s.loadDefaultScene)
   const didInit = useRef(false)
+
+  useKeyboardShortcuts()
 
   useEffect(() => {
     // Seed a starter scene once on first visit (share-link loading replaces this later).
@@ -39,6 +43,7 @@ export default function Create() {
           </button>
         </div>
       </div>
+      <InspectorPanel />
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { useEditorStore } from '../store/useEditorStore'
 
 export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorControls> }) {
   const select = useEditorStore((s) => s.select)
+  const isDragging = useEditorStore((s) => s.isDragging)
   return (
     <Canvas
       shadows
@@ -30,6 +31,8 @@ export default function EditorCanvas({ controlsRef }: { controlsRef: Ref<EditorC
         ref={controlsRef}
         makeDefault
         enableDamping
+        // Belt-and-suspenders: drei disables this while the gizmo drags, and so do we.
+        enabled={!isDragging}
         target={INITIAL_CAMERA.target}
         maxPolarAngle={Math.PI / 2 - 0.02}
         minDistance={0.6}
