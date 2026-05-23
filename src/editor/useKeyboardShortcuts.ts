@@ -21,6 +21,14 @@ export function useKeyboardShortcuts() {
       }
 
       const s = useEditorStore.getState()
+
+      // Ctrl/Cmd+D = duplicate selected
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault()
+        if (s.selectedId) s.duplicate(s.selectedId)
+        return
+      }
+
       switch (e.key) {
         case 'Delete':
         case 'Backspace':

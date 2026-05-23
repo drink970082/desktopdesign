@@ -21,6 +21,20 @@ function restingY(rests: 'desk' | 'floor', deskSurfaceY: number): number {
   return rests === 'floor' ? 0 : deskSurfaceY
 }
 
+/** Keep an [x, z] center within the desk footprint, given the object's half-extents. */
+function clampToDeskXZ(
+  x: number,
+  z: number,
+  halfX: number,
+  halfZ: number,
+  deskWidth: number,
+  deskDepth: number,
+): [number, number] {
+  const mx = Math.max(0, deskWidth / 2 - halfX - 0.01)
+  const mz = Math.max(0, deskDepth / 2 - halfZ - 0.01)
+  return [Math.min(mx, Math.max(-mx, x)), Math.min(mz, Math.max(-mz, z))]
+}
+
 /** Re-derive every object's Y from the current desk surface + its own elevation. */
 function reseat(s: { objects: SceneObject[]; deskSurfaceY: number }) {
   for (const o of s.objects) {
@@ -67,6 +81,7 @@ interface EditorState {
 
   // object actions
   add: (catalogId: string, sizeId?: string, colorwayId?: string) => void
+  duplicate: (id: string) => void
   remove: (id: string) => void
   removeSelected: () => void
   select: (id: string | null) => void
@@ -127,16 +142,47 @@ export const useEditorStore = create<EditorState>()(
     add: (catalogId, sizeId, colorwayId) =>
       set((s) => {
         const item = getItem(catalogId)
+        const sid = sizeId ?? item.defaultSizeId
+        const dims = getSize(item, sid).dimensions
+        // Offset additional copies so multiples (e.g. dual monitors) don't stack.
+        const count = s.objects.filter((o) => o.catalogId === catalogId).length
+        let x = item.defaultSpawn[0] + count * (dims[0] + 0.05)
+        let z = item.defaultSpawn[1]
+        if (item.rests === 'desk') {
+          ;[x, z] = clampToDeskXZ(x, z, dims[0] / 2, dims[2] / 2, s.deskWidth, s.deskDepth)
+        }
         const obj: SceneObject = {
           id: newId(),
           catalogId,
-          sizeId: sizeId ?? item.defaultSizeId,
+          sizeId: sid,
           colorwayId: colorwayId ?? item.defaultColorwayId,
-          position: [item.defaultSpawn[0], restingY(item.rests, s.deskSurfaceY), item.defaultSpawn[1]],
+          position: [x, restingY(item.rests, s.deskSurfaceY), z],
           rotationY: item.defaultYRotation,
         }
         s.objects.push(obj)
         s.selectedId = obj.id
+      }),
+
+    duplicate: (id) =>
+      set((s) => {
+        const src = s.objects.find((o) => o.id === id)
+        if (!src) return
+        const item = getItem(src.catalogId)
+        const dims = getSize(item, src.sizeId).dimensions
+        let x = src.position[0] + (dims[0] + 0.05)
+        let z = src.position[2]
+        if (item.rests === 'desk') {
+          ;[x, z] = clampToDeskXZ(x, z, dims[0] / 2, dims[2] / 2, s.deskWidth, s.deskDepth)
+        }
+        const copy: SceneObject = {
+          ...src,
+          id: newId(),
+          position: [x, src.position[1], z],
+          customDims: src.customDims ? { ...src.customDims } : undefined,
+          options: src.options ? { ...src.options } : undefined,
+        }
+        s.objects.push(copy)
+        s.selectedId = copy.id
       }),
 
     remove: (id) =>

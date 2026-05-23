@@ -158,6 +158,7 @@ export default function InspectorPanel() {
   const toggleOption = useEditorStore((s) => s.toggleOption)
   const setElevation = useEditorStore((s) => s.setElevation)
   const resetCustomization = useEditorStore((s) => s.resetCustomization)
+  const duplicate = useEditorStore((s) => s.duplicate)
   const remove = useEditorStore((s) => s.remove)
   const transformMode = useEditorStore((s) => s.transformMode)
   const toggleMode = useEditorStore((s) => s.toggleMode)
@@ -247,6 +248,13 @@ export default function InspectorPanel() {
                 onCustom={(hex) => setCustomColor(selected.id, hex)}
               />
 
+              <button
+                type="button"
+                onClick={() => duplicate(selected.id)}
+                className="mt-2 w-full rounded-md bg-blue-600 px-2 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Duplicate (Ctrl/⌘+D)
+              </button>
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
